@@ -1,0 +1,21 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    tools:context="hk.ust.gis.RoutePlan">
+
+    <cn.o.android.map.MapView 	android:id="@+id/omap"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+    </cn.o.android.map.MapView >
+
+    <Button
+        android:id="@+id/walk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.0"
+
+        android:onClick="SearchButtonProcess"
+        android:text="步行搜索" />
+</RelativeLayout>
