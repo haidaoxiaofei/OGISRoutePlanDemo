@@ -48,11 +48,6 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
     RouteLine route = null;
     RoutePlanSearch mSearch = null;    // 搜索模块，也可去掉地图模块独立使用
 
-//    final float xOffset = 500*2.7f;
-//    final float yOffset = 370*2.7f;
-
-    final float xOffset = -500f;
-    final float yOffset = -370f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +70,7 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
         mSearch = RoutePlanSearch.newInstance();
         mSearch.setOnGetRoutePlanResultListener(this);
 
-        symbol.setAlpha(100);
+        symbol.setAlpha(150);
         symbol.setWidth(10);
     }
 
@@ -111,46 +106,6 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
 
         routePlan(startPoint, endPoint);
 
-//        OPoint startO = new OPoint(1010071+xOffset, 1119880+yOffset);
-//        OPoint endO = new OPoint(1010573+xOffset, 1120250+yOffset);
-//
-//
-//        ProjConvert.baiduToOcn(new OPoint((float) startPoint.longitude, (float) startPoint.latitude), new ProjConvert.IResult() {
-//            @Override
-//            public void get(OPoint ret) {
-////                oPolyline.addPoint(ret);
-//                System.out.println(ret.getX());
-//                System.out.println(ret.getY());
-//            }
-//
-//        });
-//        ProjConvert.baiduToOcn(new OPoint((float)endPoint.longitude,  (float)endPoint.latitude), new	 ProjConvert.IResult(){
-//            @Override
-//            public void get(OPoint ret) {
-////                oPolyline.addPoint(ret);
-//                System.out.println(ret.getX());
-//                System.out.println(ret.getY());
-//            }
-//
-//        });
-//
-//        PlanNode stNode = PlanNode.withLocation(startPoint);
-//        PlanNode enNode = PlanNode.withLocation(endPoint);
-
-
-//        mSearch.walkingSearch((new WalkingRoutePlanOption())
-//                .from(stNode)
-//                .to(enNode));
-
-//        oPolyline.addPoint(startO);
-//        oPolyline.addPoint(endO);
-//        Graphic g = new Graphic(oPolyline, symbol);
-//        OPoint[] opoints = oPolyline.getPaths()[0].getPoints();
-//        gLayer.addGraphic(g);
-//
-//        oMap.centerAt(opoints[0], false);
-//        oMap.refresh();
-
     }
 
     public void routePlan(LatLng baiduStartPoint, LatLng baiduEndPoint){
@@ -181,24 +136,17 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
 
             for(WalkingRouteLine.WalkingStep r : steps){
                 List<LatLng> points = r.getWayPoints();
+
                 if (points.size() >= 2){
                     for(LatLng p : points){
 
-                        ProjConvert.baiduToOcn(new OPoint((float)p.longitude,  (float)p.latitude), new	 ProjConvert.IResult(){
-                            @Override
-                            public void get(OPoint ret) {
-                                ret.setX(ret.getX() + xOffset);
-                                ret.setY(ret.getY() + yOffset);
-                                oPolyline.addPoint(ret);
-                                drawRoute();
-                            }
-
-                        });
-
+                       OPoint o = ProjConvert.baiduToOcn2(new OPoint((float)p.longitude,  (float)p.latitude));
+                       oPolyline.addPoint(o);
                     }
                 }
             }
 
+            drawRoute();
 
 
         }
