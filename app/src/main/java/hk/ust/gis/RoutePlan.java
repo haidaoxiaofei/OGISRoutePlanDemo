@@ -48,8 +48,11 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
     RouteLine route = null;
     RoutePlanSearch mSearch = null;    // 搜索模块，也可去掉地图模块独立使用
 
-    final float xOffset = 500*2.7f;
-    final float yOffset = 370*2.7f;
+//    final float xOffset = 500*2.7f;
+//    final float yOffset = 370*2.7f;
+
+    final float xOffset = -500f;
+    final float yOffset = -370f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
