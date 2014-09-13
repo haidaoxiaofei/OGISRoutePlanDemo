@@ -5,50 +5,57 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.baidu.mapapi.SDKInitializer;
-import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.core.RouteLine;
-import com.baidu.mapapi.search.core.SearchResult;
-import com.baidu.mapapi.search.route.DrivingRouteResult;
-import com.baidu.mapapi.search.route.OnGetRoutePlanResultListener;
-import com.baidu.mapapi.search.route.PlanNode;
 import com.baidu.mapapi.search.route.RoutePlanSearch;
-import com.baidu.mapapi.search.route.TransitRouteResult;
-import com.baidu.mapapi.search.route.WalkingRouteLine;
-import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
-import com.baidu.mapapi.search.route.WalkingRouteResult;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.o.android.map.Graphic;
 import cn.o.android.map.GraphicsLayer;
+import cn.o.android.map.Layer;
+import cn.o.android.map.LayerEventListener;
 import cn.o.android.map.MapView;
 import cn.o.android.map.OcnMap2D5Layer;
 import cn.o.android.map.geometry.OPath;
 import cn.o.android.map.geometry.OPoint;
 import cn.o.android.map.geometry.OPolyline;
+import cn.o.android.symbol.ISymbol;
 import cn.o.android.symbol.SimpleLineSymbol;
-import cn.o.android.utils.ProjConvert;
+import cn.o.android.symbol.SimpleMarkerSymbol;
+import hk.ust.gis.Point.PointType;
 
-
-public class RoutePlan extends Activity implements OnGetRoutePlanResultListener {
+public class RoutePlan extends Activity {
 
 
 
     MapView oMap;
     GraphicsLayer gLayer = new GraphicsLayer();
-    SimpleLineSymbol symbol = new SimpleLineSymbol(Color.RED);
-    final OPolyline oPolyline = new OPolyline(new OPath());
-
+    ISymbol symbol;
+    OPolyline oPolyline = new OPolyline(new OPath());
+    private OPoint sPoint = null;
+    private OPoint ePoint = null;
+    private OPoint cPoint = null;
+    private Graphic sPointGraphic = null;
+    private Graphic ePointGraphic = null;
+    private static int POINT_RADIUS = 5;
+    private static int LINE_WIDTH = 5;
     RouteLine route = null;
     RoutePlanSearch mSearch = null;    // 搜索模块，也可去掉地图模块独立使用
+    private LayerEventListener pointListener;
+    private PointType pointType = PointType.EMPTY;
 
-
+    public List<Segment> routesList = new ArrayList<Segment>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,11 +74,39 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
         oMap.addLayer(baseLayer);
         oMap.addLayer(gLayer);
 
-        mSearch = RoutePlanSearch.newInstance();
-        mSearch.setOnGetRoutePlanResultListener(this);
+        pointListener = new LayerEventListener() {
+            @Override
+            public boolean onTouch(Layer layer, MotionEvent event) {
 
-        symbol.setAlpha(150);
-        symbol.setWidth(10);
+                OPoint scrPt = new OPoint(event.getX(), event.getY());
+                // 屏幕坐标转换为地图坐标
+                cPoint = oMap.screenToProjPoint(scrPt);
+
+                switch (pointType) {
+                    case START:
+                        sPoint = cPoint;
+                        drawPoint(sPoint, PointType.START);
+                        break;
+                    case END:
+                        ePoint = cPoint;
+
+                        drawPoint(ePoint, PointType.END);
+
+                        break;
+                }
+
+                pointType = PointType.EMPTY;
+
+                return true;
+            }
+
+        };
+        gLayer.addEventListener(pointListener);
+        try {
+            loadRouteRecord();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -80,9 +115,31 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
         
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.route_plan, menu);
+
         return true;
     }
+    private void drawPoint(OPoint p, PointType type) {
+        if (type == PointType.START) {
+            symbol = new SimpleMarkerSymbol(Color.BLUE, POINT_RADIUS,
+                    SimpleMarkerSymbol.STYLE.CIRCLE);
+            if (sPointGraphic != null) {
+                gLayer.removeGraphic(sPointGraphic);
+            }
 
+            sPointGraphic = new Graphic(p, symbol);
+            gLayer.addGraphic(sPointGraphic);
+        } else {
+            symbol = new SimpleMarkerSymbol(Color.RED, POINT_RADIUS,
+                    SimpleMarkerSymbol.STYLE.CIRCLE);
+            if (ePointGraphic != null) {
+                gLayer.removeGraphic(ePointGraphic);
+            }
+
+            ePointGraphic = new Graphic(p, symbol);
+            gLayer.addGraphic(ePointGraphic);
+        }
+
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -96,80 +153,81 @@ public class RoutePlan extends Activity implements OnGetRoutePlanResultListener 
     }
 
 
-    public void SearchButtonProcess(View v) {
+    public void onSearchButtonProcess(View v) {
 
-
-
-        //设置起终点信息，对于tranist search 来说，城市名无意义
-        LatLng startPoint = new LatLng(22.541222,113.978804);// LatLng(latitude, longitude)
-        LatLng endPoint = new LatLng(22.541201,113.980628);
-
-        routePlan(startPoint, endPoint);
-
-    }
-
-    public void routePlan(LatLng baiduStartPoint, LatLng baiduEndPoint){
-        PlanNode stNode = PlanNode.withLocation(baiduStartPoint);
-        PlanNode enNode = PlanNode.withLocation(baiduEndPoint);
-
-        mSearch.walkingSearch((new WalkingRoutePlanOption())
-        .from(stNode)
-        .to(enNode));
-    }
-
-
-    @Override
-    public void onGetWalkingRouteResult(WalkingRouteResult result) {
-        if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {
-            Toast.makeText(RoutePlan.this, "抱歉，未找到结果", Toast.LENGTH_SHORT).show();
-        }
-        if (result.error == SearchResult.ERRORNO.AMBIGUOUS_ROURE_ADDR) {
-            //起终点或途经点地址有岐义，通过以下接口获取建议查询信息
-            //result.getSuggestAddrInfo()
+        if (sPoint == null) {
+            Toast.makeText(getApplicationContext(), "Please choose the start point!",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
-        if (result.error == SearchResult.ERRORNO.NO_ERROR) {
 
-            route = result.getRouteLines().get(0);
-            List<WalkingRouteLine.WalkingStep> steps = route.getAllStep();
-
-
-            for(WalkingRouteLine.WalkingStep r : steps){
-                List<LatLng> points = r.getWayPoints();
-
-                if (points.size() >= 2){
-                    for(LatLng p : points){
-
-                       OPoint o = ProjConvert.baiduToOcn2(new OPoint((float)p.longitude,  (float)p.latitude));
-                       oPolyline.addPoint(o);
-                    }
-                }
-            }
-
-            drawRoute();
-
-
+        if (ePoint == null) {
+            Toast.makeText(getApplicationContext(), "Please choose the end point!",
+                    Toast.LENGTH_SHORT).show();
+            return;
         }
-    }
 
-    private void drawRoute(){
-        Graphic g = new Graphic(oPolyline, symbol);
-        OPoint[] opoints = oPolyline.getPaths()[0].getPoints();
-        gLayer.addGraphic(g);
+        gLayer.removeAll();
 
-        oMap.centerAt(opoints[0], false);
+        List<Segment> route = RouteFinder.findRoute(routesList,new Point(sPoint), new Point(ePoint));
+        for(Segment s : route){
+            drawRoute(s);
+        }
+
         oMap.refresh();
     }
 
-    @Override
-    public void onGetTransitRouteResult(TransitRouteResult transitRouteResult) {
+
+
+
+
+
+    private void drawRoute(Segment s){
+        symbol = new SimpleLineSymbol(Color.RED);
+        // 设置线宽
+        ((SimpleLineSymbol) symbol).setWidth(LINE_WIDTH);
+        ((SimpleLineSymbol) symbol).setAlpha(100);
+        oPolyline = new OPolyline(new OPath());
+        oPolyline.addPoint(new OPoint(s.sPoint.x, s.sPoint.y));
+        oPolyline.addPoint(new OPoint(s.ePoint.x, s.ePoint.y));
+        Graphic g = new Graphic(oPolyline, symbol);
+
+        gLayer.addGraphic(g);
+    }
+    public void onSPoint(View v) {
+        pointType = PointType.START;
+
+    }
+    public void onEPoint(View v) {
+        pointType = PointType.END;
 
     }
 
-    @Override
-    public void onGetDrivingRouteResult(DrivingRouteResult drivingRouteResult) {
 
+    private void loadRouteRecord() throws NumberFormatException, IOException {
+//        ClassLoader classLoader = Thread.currentThread()
+//                .getContextClassLoader();
+//        InputStream input = classLoader
+//                .getResourceAsStream("resources/OGIS_Route.txt");
+//        BufferedReader br = new BufferedReader(new InputStreamReader(input));
+//        String rtRecord = null;
+//        while ((rtRecord = br.readLine()) != null) {
+//            String rtInfo[] = rtRecord.split(" ");
+//            Point point1 = new Point(rtInfo[0], rtInfo[1]);
+//            Point point2 = new Point(rtInfo[2], rtInfo[3]);
+//            routesList.add(new Segment(point1, point2));
+//        }
+//        br.close();
+        String routeFilePath = "/sdcard/gmission_data/marker/OGIS_Route.txt";
+        FileReader reader = new FileReader(routeFilePath);
+        BufferedReader br = new BufferedReader(reader);
+        String rtRecord = null;
+        while ((rtRecord = br.readLine()) != null) {
+            String rtInfo[] = rtRecord.split(" ");
+            Point point1 = new Point(rtInfo[0], rtInfo[1]);
+            Point point2 = new Point(rtInfo[2], rtInfo[3]);
+            routesList.add(new Segment(point1, point2));
+        }
+        reader.close();
     }
-
-
 }

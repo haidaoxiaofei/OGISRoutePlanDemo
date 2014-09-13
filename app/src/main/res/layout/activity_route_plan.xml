@@ -16,17 +16,27 @@
         android:layout_height="wrap_content"
         android:layout_weight="1.0"
 
-        android:onClick="SearchButtonProcess"
+        android:onClick="onSearchButtonProcess"
         android:text="步行搜索" />
 
     <Button
-        android:id="@+id/haiquanwan"
-        android:layout_alignRight="@id/walk"
+        android:id="@+id/pickStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_weight="1.0"
+
+        android:onClick="onSPoint"
+        android:text="pickStart" />
+    <Button
+        android:id="@+id/pickEnd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
         android:layout_weight="1.0"
 
-        android:onClick="goToHaiquanwan"
-        android:text="转到海泉湾" />
+        android:onClick="onEPoint"
+        android:text="pickEnd" />
 </RelativeLayout>
