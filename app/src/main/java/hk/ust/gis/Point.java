@@ -150,6 +150,6 @@ public class Point implements Comparable<Point> {
 	}
 
 	public enum PointType {
-		START, END, MARK, SEGMENT, EMPTY;
+		START, END, MARK, SEGMENT, ATTACH, EMPTY;
 	}
 }

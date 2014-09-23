@@ -39,4 +39,15 @@
 
         android:onClick="onEPoint"
         android:text="pickEnd" />
+    <Button
+        android:id="@+id/attachPick"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_weight="1.0"
+
+        android:onClick="onAttachPoint"
+        android:text="pickEnd" />
+
 </RelativeLayout>

@@ -38,7 +38,6 @@ import hk.ust.gis.Point.PointType;
 public class RoutePlan extends Activity {
 
 
-
     MapView oMap;
     GraphicsLayer gLayer = new GraphicsLayer();
     ISymbol symbol;
@@ -48,6 +47,7 @@ public class RoutePlan extends Activity {
     private OPoint cPoint = null;
     private Graphic sPointGraphic = null;
     private Graphic ePointGraphic = null;
+    private Graphic aPointGraphic = null;
     private static int POINT_RADIUS = 5;
     private static int LINE_WIDTH = 5;
     RouteLine route = null;
@@ -93,6 +93,11 @@ public class RoutePlan extends Activity {
                         drawPoint(ePoint, PointType.END);
 
                         break;
+                    case ATTACH:
+                        OPoint roadPoint = pointAttachToRouteNet(cPoint);
+                        drawPoint(roadPoint, PointType.ATTACH);
+
+                        break;
                 }
 
                 pointType = PointType.EMPTY;
@@ -109,10 +114,17 @@ public class RoutePlan extends Activity {
         }
     }
 
+    private OPoint pointAttachToRouteNet(OPoint originPoint){
+        Point p = new Point(originPoint);
+        Segment s = RouteFinder.findNearestSegment(routesList, p);
+        p = s.projectPoint(p);
+
+        return new OPoint((float)p.getX(), (float)p.getY());
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.route_plan, menu);
 
@@ -128,7 +140,7 @@ public class RoutePlan extends Activity {
 
             sPointGraphic = new Graphic(p, symbol);
             gLayer.addGraphic(sPointGraphic);
-        } else {
+        } else if (type == PointType.END){
             symbol = new SimpleMarkerSymbol(Color.RED, POINT_RADIUS,
                     SimpleMarkerSymbol.STYLE.CIRCLE);
             if (ePointGraphic != null) {
@@ -137,6 +149,15 @@ public class RoutePlan extends Activity {
 
             ePointGraphic = new Graphic(p, symbol);
             gLayer.addGraphic(ePointGraphic);
+        } else if (type == PointType.ATTACH) {
+            symbol = new SimpleMarkerSymbol(Color.BLACK, POINT_RADIUS + 5,
+                    SimpleMarkerSymbol.STYLE.CIRCLE);
+            if (aPointGraphic != null) {
+                gLayer.removeGraphic(aPointGraphic);
+            }
+
+            aPointGraphic = new Graphic(p, symbol);
+            gLayer.addGraphic(aPointGraphic);
         }
 
     }
@@ -178,7 +199,10 @@ public class RoutePlan extends Activity {
     }
 
 
+    public void onAttachPoint(View v) {
+        pointType = PointType.ATTACH;
 
+    }
 
 
 
