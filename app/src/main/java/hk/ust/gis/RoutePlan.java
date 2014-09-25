@@ -190,7 +190,8 @@ public class RoutePlan extends Activity {
 
         gLayer.removeAll();
 
-        List<Segment> route = RouteFinder.findRoute(routesList,new Point(sPoint), new Point(ePoint));
+        List<Segment> route = RouteFinderPoint.findRoute(routesList,new Point(sPoint), new Point(ePoint));
+
         for(Segment s : route){
             drawRoute(s);
         }

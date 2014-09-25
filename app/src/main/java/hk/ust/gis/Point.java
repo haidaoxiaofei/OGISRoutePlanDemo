@@ -59,6 +59,7 @@ public class Point implements Comparable<Point> {
 
 	@Override
 	public boolean equals(Object obj) {
+        if (obj == null) return false;
 		return this.x == ((Point) obj).x && this.y == ((Point) obj).y;
 	}
 
