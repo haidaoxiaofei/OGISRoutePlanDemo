@@ -131,6 +131,7 @@ public class RoutePlan extends Activity {
         return true;
     }
     private void drawPoint(OPoint p, PointType type) {
+        // x = 1009128 y = 1118726
         if (type == PointType.START) {
             symbol = new SimpleMarkerSymbol(Color.BLUE, POINT_RADIUS,
                     SimpleMarkerSymbol.STYLE.CIRCLE);
